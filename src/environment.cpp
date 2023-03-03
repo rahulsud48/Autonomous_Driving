@@ -16,6 +16,9 @@
 #include <iostream>
 #include "opencv2/imgcodecs.hpp"
 
+#include "object_detection/detection.h"
+#include "object_detection/detection.cpp"
+
 struct cameraCalibrations
 {
 public:
@@ -109,8 +112,8 @@ std::string get_filename(std::string path)
 cv::Mat getDepthMap(cv::Mat& disp_left)
 {
     cameraCalibrations calib;
-    // disp_left.setTo(0.1, disp_left == 0);
-    // disp_left.setTo(0.1, disp_left == -1);
+    disp_left.setTo(0.1, disp_left == 0);
+    disp_left.setTo(0.1, disp_left == -1);
     
     float focal = calib.k_left[0][0];
     float b = (calib.t_left[0] - calib.t_right[0]);
@@ -151,6 +154,11 @@ cv::Mat getDisparityMap(cv::Mat& img_left, cv::Mat& img_right)
 
     cv::Ptr<cv::StereoSGBM> stereo = cv::StereoSGBM::create();
 
+    // int min_disparity = 0;
+    // int num_disparities = 6*16;
+    // int block_size = 15;
+    // int window_size = 3;
+
     int min_disparity = 0;
     int num_disparities = 6*16;
     int block_size = 11;
@@ -159,8 +167,8 @@ cv::Mat getDisparityMap(cv::Mat& img_left, cv::Mat& img_right)
     stereo->setMinDisparity(min_disparity);
     stereo->setNumDisparities(num_disparities);
     stereo->setBlockSize(block_size);
-    stereo->setP1(8 * 3 * window_size^2);
-    stereo->setP2(32 * 3 * window_size^2);
+    stereo->setP1(8 * 3 * window_size*window_size);
+    stereo->setP2(32 * 3 * window_size*window_size);
     stereo->setMode(cv::StereoSGBM::MODE_SGBM_3WAY);
     double Min,Max;
     cv::minMaxLoc(img_left,&Min,&Max);
@@ -174,7 +182,7 @@ cv::Mat getDisparityMap(cv::Mat& img_left, cv::Mat& img_right)
 }
 
 
-void view_images(std::string bin_path)
+void view_images(std::string bin_path, ssd_detector* ssd)
 {
     std::string filename = get_filename(bin_path);
     std::string root_left = "/media/rahul/a079ceb2-fd12-43c5-b844-a832f31d5a39/kitti-360/download_2d_perspective/KITTI-360/data_2d_raw/2013_05_28_drive_0000_sync/image_00/data_rect/";
@@ -193,15 +201,23 @@ void view_images(std::string bin_path)
     {
         std::cout << "Could not read the image: " << img_right << std::endl;
     }
+    Mat objects_left, objects_right;
+
+    // objects_right = ssd->detect_objects(img_right);
+    // ssd->display_objects(img_right, objects_right);
     cv::Mat disparity_left = getDisparityMap(img_left, img_right);
-    cv::imshow( "img_left", img_left );
-    cv::imshow( "img_right", img_right );
+    
+    // cv::imshow( "img_right", img_right );
     // cv::imshow( "disparity_left", disparity_left );
-    cv::imwrite( "disparity_left.jpg", disparity_left );
+    // cv::imwrite( "disparity_left.jpg", disparity_left );
 
     cv::Mat depth_map = getDepthMap(disparity_left);
-    cv::imwrite( "depth_map.jpg", depth_map );
+    // cv::imwrite( "depth_map.jpg", depth_map );
     
+    objects_left = ssd->detect_objects(img_left);
+    ssd->display_objects(img_left, objects_left, depth_map);
+
+    cv::imshow( "img_left", img_left );
     int k = cv::waitKey(); // Wait for a keystroke in the window
     // cv::imwrite("temp.jpg", img);
 }
@@ -225,6 +241,9 @@ void print(cameraCalibrations cam_calib)
 int main (int argc, char** argv)
 {
     std::cout << "starting enviroment" << std::endl;
+    // loading_object detector
+    ssd_detector* ssd {new ssd_detector};
+
     // viewer is a pointer in heap memory
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer ("3D Viewer"));
     // initializing the environment parameters
@@ -253,7 +272,7 @@ int main (int argc, char** argv)
         // Load pcd and run obstacle detection process
         // inputCloudI = pointProcessorI->loadPcd((*streamIterator).string());
         inputCloudI = pointProcessorI->loadBIN((*streamIterator).string());
-        view_images((*streamIterator).string());
+        view_images((*streamIterator).string(), ssd);
         cityBlock(viewer, pointProcessorI, inputCloudI);
         std::cout<<"The file being processed is: "<<get_filename((*streamIterator).string())<<std::endl;
         // std::string path_pcd = "../src/PCD/" + get_filename((*streamIterator).string()) + ".pcd";
