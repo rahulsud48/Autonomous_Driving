@@ -33,5 +33,3 @@ target_link_libraries (environment ${PCL_LIBRARIES} ${OpenCV_LIBS})
 target_include_directories(environment PRIVATE ${OpenCV_INCLUDE_DIRS})
 # target_link_libraries(environment PRIVATE ${OpenCV_LIBS})
 
-
-
