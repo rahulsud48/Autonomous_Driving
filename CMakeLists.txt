@@ -16,8 +16,8 @@ find_package(PCL 1.2 REQUIRED)
 find_package(OpenCV CONFIG REQUIRED)
 
 # directories 
-include_directories( ${OpenCV_INCLUDE_DIRS})
-include_directories(${PCL_INCLUDE_DIRS})
+include_directories( ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+# include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 list(REMOVE_ITEM PCL_LIBRARIES "vtkproj4")
