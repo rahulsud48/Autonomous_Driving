@@ -1,19 +1,30 @@
-# cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
-cmake_minimum_required(VERSION 2.8.12)
+# cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+# project(inference)
+
+# find_package(Torch REQUIRED)
+
+# add_executable(inference inference.cpp)
+# target_link_libraries(inference "${TORCH_LIBRARIES}")
+# set_property(TARGET inference PROPERTY CXX_STANDARD 14)
+
+
+
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 
 add_definitions(-std=c++11 -g)
 
 # set(CXX_FLAGS "-Wall")
 # set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-project(Autonomous_Driving)
+project(inference)
 
 # packages required
 find_package(PCL 1.2 REQUIRED)
 find_package(OpenCV CONFIG REQUIRED)
+find_package(Torch REQUIRED PATHS "../libtorch" )
 
 # directories 
 include_directories( ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
@@ -31,5 +42,9 @@ list(REMOVE_ITEM PCL_LIBRARIES "vtkproj4")
 add_executable (environment src/environment.cpp src/render/render.cpp src/processPointClouds.cpp)
 target_link_libraries (environment ${PCL_LIBRARIES} ${OpenCV_LIBS})
 target_include_directories(environment PRIVATE ${OpenCV_INCLUDE_DIRS})
-# target_link_libraries(environment PRIVATE ${OpenCV_LIBS})
+target_link_libraries(environment 
+    -lopencv_core 
+    -lopencv_imgcodecs 
+    -lopencv_highgui 
+)
 

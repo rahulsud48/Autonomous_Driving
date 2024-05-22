@@ -12,6 +12,10 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn.hpp>
 
+#include <torch/torch.h>
+#include <torch/script.h>
+#include <cmath> 
+
 using namespace std;
 using namespace cv;
 
@@ -42,5 +46,64 @@ public:
     }
 };
 
+class DataEncoder
+{
+private:
+    int img_w = 300; 
+    int img_h = 300;
+    int num_classes;
+    int num_fms = 5;
+    float cls_threshold=0.7f;
+    float nms_threshold=0.3f;
+    std::vector<float> anchor_areas;
+    std::vector<float> aspect_ratios{0.5,1,2};
+    std::vector<float> scales;
+    std::vector<int> fm_sizes;
+    std::map<std::string, int> img_size;
+    torch::Tensor anchor_boxes_tensor;
+    void createParameters();
+    torch::Tensor generate_anchor_grid(int img_w, int img_h, int fm_size, torch::Tensor anchors);
+    torch::Tensor generate_anchors(float anchor_area, std::vector<float> aspect_ratios, std::vector<float> scales);
+    torch::Tensor convert_2dvec_to_torch_tensor(std::vector<std::vector<float>> array_2d);
+
+public:
+    DataEncoder();
+    torch::Tensor decode_boxes(const torch::Tensor& deltas, const torch::Tensor& anchors);
+    torch::Tensor compute_nms(const torch::Tensor& boxes, const torch::Tensor& conf, float threshold = 0.5);
+
+    void decode(
+        torch::Tensor loc_pred, 
+        torch::Tensor cls_pred, 
+        std::vector<std::map<int, std::vector<std::vector<float>>>>& output_boxes, 
+        std::vector<std::map<int, std::vector<int>>>& output_classes, 
+        int batch_size
+    );
+};
+
+
+class ssd_detector_torch
+{
+private:
+    std::string model_path = "/media/rahul/a079ceb2-fd12-43c5-b844-a832f31d5a39/Projects/autonomous_cars/Object_Detector_for_road/SSD_Detector_for_road_training/ssd_libTorch/build/tiny_model.pt";
+    torch::jit::script::Module ssd_detector;
+    void load_model();
+public:
+    ssd_detector_torch()
+    {
+        load_model();
+    };
+    void transform_image(cv::Mat* img, torch::Tensor* img_tensor);
+    void detect(torch::Tensor img, torch::Tensor boxes, torch::Tensor classes);
+    void display_objects(
+        cv::Mat& img, 
+        std::vector<std::map<int, std::vector<std::vector<float>>>> output_boxes, 
+        std::vector<std::map<int, std::vector<int>>> output_classes,
+        int batch_size
+    )
+    ~ssd_detector()
+    {
+        std::cout<<"detector destroyed properly"<<std::endl;
+    }
+};
 
 #endif

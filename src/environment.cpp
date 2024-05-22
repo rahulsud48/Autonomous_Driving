@@ -183,7 +183,7 @@ cv::Mat getDisparityMap(cv::Mat& img_left, cv::Mat& img_right)
 }
 
 
-void view_images(std::string bin_path, ssd_detector* ssd)
+void view_images(std::string bin_path, ssd_detector_torch* ssd)
 {
     std::string filename = get_filename(bin_path);
     std::string root_left = "/media/rahul/a079ceb2-fd12-43c5-b844-a832f31d5a39/kitti-360/download_2d_perspective/KITTI-360/data_2d_raw/2013_05_28_drive_0000_sync/image_00/data_rect/";
@@ -203,19 +203,11 @@ void view_images(std::string bin_path, ssd_detector* ssd)
         std::cout << "Could not read the image: " << img_right << std::endl;
     }
     Mat objects_left, objects_right;
-
-    // objects_right = ssd->detect_objects(img_right);
-    // ssd->display_objects(img_right, objects_right);
     cv::Mat disparity_left = getDisparityMap(img_left, img_right);
-    
-    // cv::imshow( "img_right", img_right );
-    // cv::imshow( "disparity_left", disparity_left );
-    // cv::imwrite( "disparity_left.jpg", disparity_left );
-
     cv::Mat depth_map = getDepthMap(disparity_left);
-    // cv::imwrite( "depth_map.jpg", depth_map );
-    
-    objects_left = ssd->detect_objects(img_left);
+
+    torch::Tensor img, boxes, classes;
+    objects_left = ssd->detect(img_left);
     ssd->display_objects(img_left, objects_left, depth_map);
 
     cv::imshow( "img_left", img_left );
@@ -243,7 +235,7 @@ int main (int argc, char** argv)
 {
     std::cout << "starting enviroment" << std::endl;
     // loading_object detector
-    ssd_detector* ssd {new ssd_detector};
+    ssd_detector_torch* ssd {new ssd_detector_torch};
 
     // viewer is a pointer in heap memory
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer ("3D Viewer"));
