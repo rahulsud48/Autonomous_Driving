@@ -98,7 +98,8 @@ public:
         cv::Mat& img, 
         std::vector<std::map<int, std::vector<std::vector<float>>>> output_boxes, 
         std::vector<std::map<int, std::vector<int>>> output_classes,
-        int batch_size
+        int batch_size,
+        cv::Mat& depth_map
     )
     ~ssd_detector()
     {

@@ -370,7 +370,9 @@ void ssd_detector_torch::display_objects(
     cv::Mat& img, 
     std::vector<std::map<int, std::vector<std::vector<float>>>> output_boxes, 
     std::vector<std::map<int, std::vector<int>>> output_classes,
-    int batch_size
+    int batch_size,
+    cv::Mat& depth_map
+
 )
 {
     for (int i=0; i<batch_size; i++)
@@ -382,13 +384,29 @@ void ssd_detector_torch::display_objects(
             for (int64_t k = 0; k < instance; k++)
             {
                 std::vector<float> box = boxes[k];
-                float x1 = boxes[k][0];
-                float y1 = boxes[k][1];
-                float x2 = boxes[k][2];
-                float y2 = boxes[k][3];
-                cv::rectangle(img, cv::Point(static_cast<int>(x1), static_cast<int>(y1)),
-                  cv::Point(static_cast<int>(x2), static_cast<int>(y2)),
-                  cv::Scalar(0, 255, 0), 2);
+                int x1 = static_cast<int>(boxes[k][0]);
+                int y1 = static_cast<int>(boxes[k][1]);
+                int x2 = static_cast<int>(boxes[k][2]);
+                int y2 = static_cast<int>(boxes[k][3]);
+
+                int x_mid = (x1+x2)/2;
+                int y_mid = (y1+y2)/2;
+
+                cv::Rect myROI(x_mid, y_mid, 10, 10);
+                cv::Mat depth_object = depth_map(myROI);
+                double Min,Max;
+                cv::minMaxLoc(depth_object,&Min,&Max);
+
+                std::cout<<"the depth of the object is: "<< Min<<std::endl;
+
+                std::ostringstream ss;
+                ss << Min;
+                std::string s(ss.str());
+
+
+                // display_text(img, classes[classId].c_str(), x, y);
+                display_text(img, s, x_mid, y_mid);
+                rectangle(img, Point(x1,y2), Point(y1, y2), Scalar(255,255,255), 2);
             }
         }
     }

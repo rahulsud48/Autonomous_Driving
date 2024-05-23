@@ -183,7 +183,7 @@ cv::Mat getDisparityMap(cv::Mat& img_left, cv::Mat& img_right)
 }
 
 
-void view_images(std::string bin_path, ssd_detector_torch* ssd)
+void view_images(std::string bin_path, ssd_detector_torch* ssd, DataEncoder encoder)
 {
     std::string filename = get_filename(bin_path);
     std::string root_left = "/media/rahul/a079ceb2-fd12-43c5-b844-a832f31d5a39/kitti-360/download_2d_perspective/KITTI-360/data_2d_raw/2013_05_28_drive_0000_sync/image_00/data_rect/";
@@ -192,6 +192,8 @@ void view_images(std::string bin_path, ssd_detector_torch* ssd)
     std::string path_right = root_right+filename+".png";
     cv::Mat img_left = cv::imread(path_left, cv::IMREAD_COLOR);
     cv::Mat img_right = cv::imread(path_right, cv::IMREAD_COLOR);
+
+    cv::Mat img_left_copy = img_left.clone();
     
     if(img_left.empty())
     {
@@ -206,9 +208,17 @@ void view_images(std::string bin_path, ssd_detector_torch* ssd)
     cv::Mat disparity_left = getDisparityMap(img_left, img_right);
     cv::Mat depth_map = getDepthMap(disparity_left);
 
-    torch::Tensor img, boxes, classes;
-    objects_left = ssd->detect(img_left);
-    ssd->display_objects(img_left, objects_left, depth_map);
+
+    // NN Pipeline
+
+    torch::Tensor img_tensor_left, boxes, classes;
+    ssd->transform_image(&img_left_copy, &img_tensor_left);
+    ssd->detect(img_tensor_left, boxes, classes);
+    std::vector<std::map<int, std::vector<std::vector<float>>>> output_boxes;
+    std::vector<std::map<int, std::vector<int>>> output_classes;  
+    encoder.decode(boxes, classes, output_boxes, output_classes, 1);
+
+    ssd->display_objects(img_left, output_boxes, output_classes, 1, depth_map);
 
     cv::imshow( "img_left", img_left );
     int k = cv::waitKey(); // Wait for a keystroke in the window
@@ -236,6 +246,9 @@ int main (int argc, char** argv)
     std::cout << "starting enviroment" << std::endl;
     // loading_object detector
     ssd_detector_torch* ssd {new ssd_detector_torch};
+
+    // loading the data encoder
+    DataEncoder encoder();
 
     // viewer is a pointer in heap memory
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer ("3D Viewer"));
@@ -265,7 +278,7 @@ int main (int argc, char** argv)
         // Load pcd and run obstacle detection process
         // inputCloudI = pointProcessorI->loadPcd((*streamIterator).string());
         inputCloudI = pointProcessorI->loadBIN((*streamIterator).string());
-        view_images((*streamIterator).string(), ssd);
+        view_images((*streamIterator).string(), ssd, encoder);
         cityBlock(viewer, pointProcessorI, inputCloudI);
         std::cout<<"The file being processed is: "<<get_filename((*streamIterator).string())<<std::endl;
         // std::string path_pcd = "../src/PCD/" + get_filename((*streamIterator).string()) + ".pcd";
