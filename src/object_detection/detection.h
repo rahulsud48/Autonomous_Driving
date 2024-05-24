@@ -100,11 +100,12 @@ public:
         std::vector<std::map<int, std::vector<int>>> output_classes,
         int batch_size,
         cv::Mat& depth_map
-    )
-    ~ssd_detector()
+    );
+    void display_text(cv::Mat& img, std::string text, int x, int y);
+    ~ssd_detector_torch()
     {
         std::cout<<"detector destroyed properly"<<std::endl;
-    }
+    };
 };
 
 #endif

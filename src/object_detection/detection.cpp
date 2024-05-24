@@ -191,7 +191,7 @@ torch::Tensor DataEncoder::decode_boxes(const torch::Tensor& deltas, const torch
     return result;
 }
 
-torch::Tensor DataEncoder::compute_nms(const torch::Tensor& boxes, const torch::Tensor& conf, float threshold = 0.5) {
+torch::Tensor DataEncoder::compute_nms(const torch::Tensor& boxes, const torch::Tensor& conf, float threshold) {
     // Extract box coordinates
     auto x1 = boxes.index({torch::indexing::Slice(), 0});
     auto y1 = boxes.index({torch::indexing::Slice(), 1});
@@ -287,7 +287,7 @@ void DataEncoder::decode(
             torch::Tensor ids_map = torch::tensor(ids);
 
 
-            torch::Tensor keep = compute_nms(boxes.index_select(0,ids_map), class_conf.index_select(0,ids_map), nms_threshold);
+            torch::Tensor keep = compute_nms(boxes.index_select(0,ids_map), class_conf.index_select(0,ids_map), 0.5);
 
 
             torch::Tensor boxes_out = boxes.index_select(0,ids_map).index_select(0,keep);
@@ -356,7 +356,7 @@ void ssd_detector_torch::transform_image(cv::Mat* img, torch::Tensor* img_tensor
     *img_tensor = img_tensor->unsqueeze(0);  // [1, channels, height, width]
 }
 
-void ssd_detector_torch::detect(torch::Tensor img, torch::Tensor boxes, torch::Tensor classes)
+void ssd_detector_torch::detect(torch::Tensor img_tensor, torch::Tensor boxes, torch::Tensor classes)
 {
     std::vector<torch::jit::IValue> jit_input;
     jit_input.push_back(img_tensor);
@@ -364,6 +364,18 @@ void ssd_detector_torch::detect(torch::Tensor img, torch::Tensor boxes, torch::T
     auto outputs = ssd_detector.forward(jit_input).toTuple();
     boxes = outputs->elements()[0].toTensor();
     classes = outputs->elements()[1].toTensor();
+}
+
+void ssd_detector_torch::display_text(cv::Mat& img, std::string text, int x, int y)
+{
+    // Get text size
+    int baseLine;
+    cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.7, 1, &baseLine);
+    // Use text size to create a black rectangle
+    rectangle(img, Point(x,y-textSize.height-baseLine), Point(x+textSize.width,y+baseLine),
+             Scalar(0,0,0),-1);
+    // Display text inside the rectangle
+    putText(img, text, Point(x,y-5), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,255,255), 1, LINE_AA);
 }
 
 void ssd_detector_torch::display_objects(

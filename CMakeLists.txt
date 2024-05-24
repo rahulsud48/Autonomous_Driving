@@ -40,6 +40,7 @@ list(REMOVE_ITEM PCL_LIBRARIES "vtkproj4")
 
 # executable
 add_executable (environment src/environment.cpp src/render/render.cpp src/processPointClouds.cpp)
+target_link_libraries(environment "${TORCH_LIBRARIES}")
 target_link_libraries (environment ${PCL_LIBRARIES} ${OpenCV_LIBS})
 target_include_directories(environment PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(environment 

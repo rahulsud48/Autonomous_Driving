@@ -248,7 +248,7 @@ int main (int argc, char** argv)
     ssd_detector_torch* ssd {new ssd_detector_torch};
 
     // loading the data encoder
-    DataEncoder encoder();
+    DataEncoder encoder = DataEncoder();
 
     // viewer is a pointer in heap memory
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer ("3D Viewer"));
