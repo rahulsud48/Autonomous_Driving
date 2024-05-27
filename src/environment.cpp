@@ -214,6 +214,7 @@ void view_images(std::string bin_path, ssd_detector_torch* ssd, DataEncoder enco
     torch::Tensor img_tensor_left, boxes, classes;
     ssd->transform_image(&img_left_copy, &img_tensor_left);
     ssd->detect(img_tensor_left, boxes, classes);
+    
     std::vector<std::map<int, std::vector<std::vector<float>>>> output_boxes;
     std::vector<std::map<int, std::vector<int>>> output_classes;  
     encoder.decode(boxes, classes, output_boxes, output_classes, 1);
@@ -246,6 +247,13 @@ int main (int argc, char** argv)
     std::cout << "starting enviroment" << std::endl;
     // loading_object detector
     ssd_detector_torch* ssd {new ssd_detector_torch};
+    // ssd_detector_torch ssd = ssd_detector_torch();
+
+    // Create an object on the stack
+    // ssd_detector_torch ssd();
+
+    // Create a pointer to the stack-allocated object
+    // ssd_detector_torch* ssd_ptr = &ssd;
 
     // loading the data encoder
     DataEncoder encoder = DataEncoder();

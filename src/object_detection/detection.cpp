@@ -356,7 +356,7 @@ void ssd_detector_torch::transform_image(cv::Mat* img, torch::Tensor* img_tensor
     *img_tensor = img_tensor->unsqueeze(0);  // [1, channels, height, width]
 }
 
-void ssd_detector_torch::detect(torch::Tensor img_tensor, torch::Tensor boxes, torch::Tensor classes)
+void ssd_detector_torch::detect(torch::Tensor& img_tensor, torch::Tensor& boxes, torch::Tensor& classes)
 {
     std::vector<torch::jit::IValue> jit_input;
     jit_input.push_back(img_tensor);
@@ -364,6 +364,7 @@ void ssd_detector_torch::detect(torch::Tensor img_tensor, torch::Tensor boxes, t
     auto outputs = ssd_detector.forward(jit_input).toTuple();
     boxes = outputs->elements()[0].toTensor();
     classes = outputs->elements()[1].toTensor();
+
 }
 
 void ssd_detector_torch::display_text(cv::Mat& img, std::string text, int x, int y)

@@ -8,9 +8,15 @@
 #include <vector>
 #include <stdlib.h>
 #include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
+// #include <opencv2/imgproc.hpp>
+// #include <opencv2/highgui.hpp>
 #include <opencv2/dnn.hpp>
+#include "opencv2/imgcodecs.hpp"
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include <torch/torch.h>
 #include <torch/script.h>
@@ -93,7 +99,7 @@ public:
         load_model();
     };
     void transform_image(cv::Mat* img, torch::Tensor* img_tensor);
-    void detect(torch::Tensor img, torch::Tensor boxes, torch::Tensor classes);
+    void detect(torch::Tensor& img, torch::Tensor& boxes, torch::Tensor& classes);
     void display_objects(
         cv::Mat& img, 
         std::vector<std::map<int, std::vector<std::vector<float>>>> output_boxes, 
