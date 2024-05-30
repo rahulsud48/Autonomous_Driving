@@ -269,7 +269,7 @@ void DataEncoder::decode(
         torch::Tensor boxes = decode_boxes(loc_pred[i], anchor_boxes_tensor);
         
         torch::Tensor conf = cls_pred[i].softmax(1);
-        for (int j=1; j<num_classes;j++)
+        for (int j=1; j<12;j++)
         {
             torch::Tensor class_conf = conf.index({torch::indexing::Slice(), j});
             // Find indices where class_conf exceeds cls_threshold
@@ -373,8 +373,8 @@ void ssd_detector_torch::display_text(cv::Mat& img, std::string text, int x, int
     int baseLine;
     cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.7, 1, &baseLine);
     // Use text size to create a black rectangle
-    rectangle(img, Point(x,y-textSize.height-baseLine), Point(x+textSize.width,y+baseLine),
-             Scalar(0,0,0),-1);
+    // rectangle(img, Point(x,y-textSize.height-baseLine), Point(x+textSize.width,y+baseLine),
+    //          Scalar(0,0,0),-1);
     // Display text inside the rectangle
     putText(img, text, Point(x,y-5), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,255,255), 1, LINE_AA);
 }
@@ -419,7 +419,7 @@ void ssd_detector_torch::display_objects(
 
                 // display_text(img, classes[classId].c_str(), x, y);
                 display_text(img, s, x_mid, y_mid);
-                rectangle(img, Point(x1,y2), Point(y1, y2), Scalar(255,255,255), 2);
+                cv::rectangle(img, Point(x1,y2), Point(y1, y2), Scalar(255,255,255), 2);
             }
         }
     }

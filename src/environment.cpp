@@ -219,11 +219,14 @@ void view_images(std::string bin_path, ssd_detector_torch* ssd, DataEncoder enco
     std::vector<std::map<int, std::vector<int>>> output_classes;  
     encoder.decode(boxes, classes, output_boxes, output_classes, 1);
 
+    // std::cout<<boxes<<"\n";
+    // std::cout<<classes<<"\n";
+
     ssd->display_objects(img_left, output_boxes, output_classes, 1, depth_map);
 
-    cv::imshow( "img_left", img_left );
-    int k = cv::waitKey(); // Wait for a keystroke in the window
-    // cv::imwrite("temp.jpg", img);
+    // cv::imshow( "img_left", img_left );
+    // int k = cv::waitKey(); // Wait for a keystroke in the window
+    cv::imwrite("temp.jpg", img_left);
 }
 
 void print(cameraCalibrations cam_calib)
