@@ -402,23 +402,23 @@ void ssd_detector_torch::display_objects(
                 int x2 = static_cast<int>(boxes[k][2]);
                 int y2 = static_cast<int>(boxes[k][3]);
 
-                int x_mid = (x1+x2)/2;
-                int y_mid = (y1+y2)/2;
+                // int x_mid = (x1+x2)/2;
+                // int y_mid = (y1+y2)/2;
 
-                cv::Rect myROI(x_mid, y_mid, 10, 10);
-                cv::Mat depth_object = depth_map(myROI);
-                double Min,Max;
-                cv::minMaxLoc(depth_object,&Min,&Max);
+                // cv::Rect myROI(x_mid, y_mid, 10, 10);
+                // cv::Mat depth_object = depth_map(myROI);
+                // double Min,Max;
+                // cv::minMaxLoc(depth_object,&Min,&Max);
 
-                std::cout<<"the depth of the object is: "<< Min<<std::endl;
+                // std::cout<<"the depth of the object is: "<< Min<<std::endl;
 
-                std::ostringstream ss;
-                ss << Min;
-                std::string s(ss.str());
+                // std::ostringstream ss;
+                // ss << Min;
+                // std::string s(ss.str());
 
 
-                // display_text(img, classes[classId].c_str(), x, y);
-                display_text(img, s, x_mid, y_mid);
+                // // display_text(img, classes[classId].c_str(), x, y);
+                // display_text(img, s, x_mid, y_mid);
                 cv::rectangle(img, Point(x1,y2), Point(y1, y2), Scalar(255,255,255), 2);
             }
         }
