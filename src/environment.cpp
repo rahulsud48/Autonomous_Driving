@@ -63,21 +63,21 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
     // renderPointCloud(viewer,segmentCloud.first,"obstCloud",Color(1,0,0));
     renderPointCloud(viewer,segmentCloud.second,"planeCloud",Color(0,1,0));
 
-    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(segmentCloud.first, .5, 100, 1000);
-    int clusterId = 0;
-    std::vector<Color> colors = {Color(1,0,0), Color(0,1,0), Color(0,0,1)};
-    for(pcl::PointCloud<pcl::PointXYZI>::Ptr cluster: cloudClusters){
-        std::cout << "cluster size ";
-        pointProcessorI->numPoints(cluster);
-        renderPointCloud(viewer, cluster, "obstCloud"+std::to_string(clusterId), Color(0,0,1));//colors[clusterId%colors.size()]);
+    // std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(segmentCloud.first, .5, 100, 1000);
+    // int clusterId = 0;
+    // std::vector<Color> colors = {Color(1,0,0), Color(0,1,0), Color(0,0,1)};
+    // for(pcl::PointCloud<pcl::PointXYZI>::Ptr cluster: cloudClusters){
+    //     std::cout << "cluster size ";
+    //     pointProcessorI->numPoints(cluster);
+    //     renderPointCloud(viewer, cluster, "obstCloud"+std::to_string(clusterId), Color(0,0,1));//colors[clusterId%colors.size()]);
         
-        if (render_box){
-            Box box = pointProcessorI->BoundingBox(cluster);
-            renderBox(viewer, box, clusterId, Color(1,0,0));
-        }
+    //     if (render_box){
+    //         Box box = pointProcessorI->BoundingBox(cluster);
+    //         renderBox(viewer, box, clusterId, Color(1,0,0));
+    //     }
 
-        clusterId++;
-    }
+    //     clusterId++;
+    // }
 
 }
 

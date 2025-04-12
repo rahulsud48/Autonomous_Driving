@@ -368,7 +368,8 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
         // this needs to be sent on GPU
         std::vector<int> inlier;
         pcl::PointIndices::Ptr inliersTemp{new pcl::PointIndices()};
-
+        pcl::PointIndices::Ptr inliersTemp_check{new pcl::PointIndices()};
+        int idx = 0;
         for (auto it = cloud->points.begin(); it != cloud->points.end(); ++it)
         {
             float d = fabs(A * (*it).x + B * (*it).y + C * (*it).z + D) / sqrt_denom; // |A*x+B*y+C*z+D|/(A^2+B^2+C^2)
@@ -376,7 +377,9 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
             if (d <= distanceThreshold)
             {
                 inliersTemp->indices.push_back(it - cloud->begin());
+                
             }
+            idx++;
         }
         for (int it = 0; it < h_points->size() ; it=it+3)
         {
@@ -392,7 +395,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
             }
         }
 
-        for (int it = 0; it < inlier.size() ; it+3)
+        for (int it = 0; it < inlier.size() ; it++)
         {
             if (inlier[it] == 1)
             {
@@ -403,7 +406,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
                 // inlierPoints->points.push_back(inlier_point);
 
-                inliersResult_check->indices.push_back(it);
+                inliersTemp_check->indices.push_back(it);
 
             }
             
@@ -415,6 +418,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
         if (inliersTemp->indices.size() > inliersResult->indices.size())
         {
             inliersResult = inliersTemp;
+            inliersResult_check = inliersTemp_check;
         }
     }
 
