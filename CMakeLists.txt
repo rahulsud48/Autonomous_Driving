@@ -14,6 +14,7 @@ project(Autonomous_Driving)
 # packages required
 find_package(PCL 1.2 REQUIRED)
 find_package(OpenCV CONFIG REQUIRED)
+find_package(OpenCL REQUIRED)
 
 # directories 
 include_directories( ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
@@ -29,7 +30,15 @@ list(REMOVE_ITEM PCL_LIBRARIES "vtkproj4")
 
 # executable
 add_executable (environment src/environment.cpp src/render/render.cpp src/processPointClouds.cpp)
-target_link_libraries (environment ${PCL_LIBRARIES} ${OpenCV_LIBS})
+# target_link_libraries (environment ${PCL_LIBRARIES} ${OpenCV_LIBS})
+# target_link_libraries(environment PRIVATE OpenCL::OpenCL)
+target_link_libraries(environment
+    PRIVATE
+    ${PCL_LIBRARIES}
+    ${OpenCV_LIBS}
+    OpenCL::OpenCL
+)
 target_include_directories(environment PRIVATE ${OpenCV_INCLUDE_DIRS})
+
 # target_link_libraries(environment PRIVATE ${OpenCV_LIBS})
 

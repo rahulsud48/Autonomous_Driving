@@ -97,7 +97,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
 
 template<typename PointT>
-std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlanePCL(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
 {
     // Time segmentation process
     auto startTime = std::chrono::steady_clock::now();
@@ -133,25 +133,63 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
 
 template<typename PointT>
-std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlane_kernel(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlaneCPU(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
 {
     pcl::PointIndices::Ptr inliersResult{new pcl::PointIndices()};
     srand(time(NULL));
     auto startTime = std::chrono::steady_clock::now();
 
+    // 1. Flatten cloud into float4
+    /*
+    Flatten the cloud is important because in memory, the point cloud is not continuous, which does not help us to optimize the memory.
+    Also, in production, it is important to make sure that we read bin directly to STL Vector.
+    Thus, I will not be profiling this operation
+    */
+    std::vector<float>* h_points = new std::vector<float>();  // detele h_points: free nmemory
+    for (size_t i = 0; i < cloud->points.size(); ++i) {
+        h_points->push_back(cloud->points[i].x);
+        h_points->push_back(cloud->points[i].y);
+        h_points->push_back(cloud->points[i].z);
+    }
+    
+
+
     // Segment the planar component from the cloud, represented by indicies of inliers from fitted plane with most inliers
     while (maxIterations-- > 0)
     {
         // Randomly sample subset
-        PointT point1 = cloud->points.at(rand() % (cloud->points.size()));
-        PointT point2 = cloud->points.at(rand() % (cloud->points.size()));
-        PointT point3 = cloud->points.at(rand() % (cloud->points.size()));
+        // PointT point1 = cloud->points.at(rand() % (cloud->points.size()));
+        // PointT point2 = cloud->points.at(rand() % (cloud->points.size()));
+        // PointT point3 = cloud->points.at(rand() % (cloud->points.size()));
+        int p1_id = (rand() % (h_points->size() / 3)) * 3;
+        float p1_x = h_points->at(p1_id);
+        float p1_y = h_points->at(p1_id+1);
+        float p1_z = h_points->at(p1_id+2);
+
+        int p2_id = (rand() % (h_points->size() / 3)) * 3;
+        float p2_x = h_points->at(p2_id);
+        float p2_y = h_points->at(p2_id+1);
+        float p2_z = h_points->at(p2_id+2);
+
+        int p3_id = (rand() % (h_points->size() / 3)) * 3;
+        float p3_x = h_points->at(p3_id);
+        float p3_y = h_points->at(p3_id+1);
+        float p3_z = h_points->at(p3_id+2);
+
+
+
+
         // Fit a plane, Ax+By+Cz+D=0
         float A, B, C, D;
-        A = (point2.y - point1.y) * (point3.z - point1.z) - (point2.z - point1.z) * (point3.y - point1.y); // (y2 - y1)(z3 - z1) - (z2 - z1)(y3 - y1)
-        B = (point2.z - point1.z) * (point3.x - point1.x) - (point2.x - point1.x) * (point3.z - point1.z); // (z2 - z1)(x3 - x1) - (x2 - x1)(z3 - z1)
-        C = (point2.x - point1.x) * (point3.y - point1.y) - (point2.y - point1.y) * (point3.x - point1.x); // (x2 - x1)(y3 - y1) - (y2 - y1)(x3 - x1)
-        D = -1 * (A * point1.x + B * point1.y + C * point1.z); // -(A * x1 + B * y1 + C * z1)
+        // A = (point2.y - point1.y) * (point3.z - point1.z) - (point2.z - point1.z) * (point3.y - point1.y); // (y2 - y1)(z3 - z1) - (z2 - z1)(y3 - y1)
+        // B = (point2.z - point1.z) * (point3.x - point1.x) - (point2.x - point1.x) * (point3.z - point1.z); // (z2 - z1)(x3 - x1) - (x2 - x1)(z3 - z1)
+        // C = (point2.x - point1.x) * (point3.y - point1.y) - (point2.y - point1.y) * (point3.x - point1.x); // (x2 - x1)(y3 - y1) - (y2 - y1)(x3 - x1)
+        // D = -1 * (A * point1.x + B * point1.y + C * point1.z); // -(A * x1 + B * y1 + C * z1)
+
+        A = (p2_y - p1_y) * (p3_z - p1_z) - (p2_z - p1_z) * (p3_y - p1_y); // (y2 - y1)(z3 - z1) - (z2 - z1)(y3 - y1)
+        B = (p2_z - p1_z) * (p3_x - p1_x) - (p2_x - p1_x) * (p3_z - p1_z); // (z2 - z1)(x3 - x1) - (x2 - x1)(z3 - z1)
+        C = (p2_x - p1_x) * (p3_y - p1_y) - (p2_y - p1_y) * (p3_x - p1_x); // (x2 - x1)(y3 - y1) - (y2 - y1)(x3 - x1)
+        D = -1 * (A * p1_x + B * p1_y + C * p1_z); // -(A * x1 + B * y1 + C * z1)
 
         float sqrt_denom = sqrt(A * A + B * B + C * C);
 
@@ -182,9 +220,219 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(inliersResult, cloud);
 
+    delete h_points;
+
     return segResult;
 }
 
+template<typename PointT>
+std::string ProcessPointClouds<PointT>::loadKernel(const char* filename) 
+{
+    FILE* file = fopen(filename, "r");
+    if (!file) 
+    {
+        fprintf(stderr, "Error: Could not open kernel file %s\n", filename);
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char* source = (char*)malloc(length + 1);
+    if (!source) 
+    {
+        fprintf(stderr, "Error: Could not allocate memory for kernel source\n");
+        fclose(file);
+        return NULL;
+    }
+
+    fread(source, 1, length, file);
+    source[length] = '\0'; // Null-terminate the string
+
+    fclose(file);
+    return source;
+}
+
+
+template<typename PointT>
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlaneGPU(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
+{
+    pcl::PointIndices::Ptr inliersResult{new pcl::PointIndices()};
+    pcl::PointIndices::Ptr inliersResult_check{new pcl::PointIndices()};
+    typename pcl::PointCloud<PointT>::Ptr inlierPoints(new pcl::PointCloud<PointT>());
+
+    
+
+    srand(time(NULL));
+    auto startTime = std::chrono::steady_clock::now();
+
+    //------------------------------------------------------
+    // 2. Initialize data on the HOST
+    //------------------------------------------------------
+    // 1. Flatten cloud into float4
+    /*
+    Flatten the cloud is important because in memory, the point cloud is not continuous, which does not help us to optimize the memory.
+    Also, in production, it is important to make sure that we read bin directly to STL Vector.
+    Thus, I will not be profiling this operation
+    */
+    std::vector<float>* h_points = new std::vector<float>();  // detele h_points: free nmemory
+    for (size_t i = 0; i < cloud->points.size(); ++i) {
+        h_points->push_back(cloud->points[i].x);
+        h_points->push_back(cloud->points[i].y);
+        h_points->push_back(cloud->points[i].z);
+    }
+
+    //------------------------------------------------------
+    // 3. Platform and device setup
+    //------------------------------------------------------
+    cl_platform_id platform;
+    clGetPlatformIDs(1, &platform, NULL);
+    cl_device_id device;
+    clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    // Max Work GroupSize of the device
+    size_t max_work_group_size;
+    clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(max_work_group_size), &max_work_group_size, NULL);
+
+    //------------------------------------------------------
+    // 4. Create a context and command queue
+    //------------------------------------------------------
+    // Create context and command queue with profiling enabled
+    cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, NULL);
+    cl_command_queue queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, NULL);
+
+    //------------------------------------------------------
+    // 5. Build the program and create the kernel
+    //------------------------------------------------------
+    const char* kernel_filename = "../src/ransac_kernel.cl";
+    std::string kernel_source = loadKernel(kernel_filename);
+    
+
+
+    // Segment the planar component from the cloud, represented by indicies of inliers from fitted plane with most inliers
+    while (maxIterations-- > 0)
+    {
+        // Randomly sample subset
+        // PointT point1 = cloud->points.at(rand() % (cloud->points.size()));
+        // PointT point2 = cloud->points.at(rand() % (cloud->points.size()));
+        // PointT point3 = cloud->points.at(rand() % (cloud->points.size()));
+        int p1_id = (rand() % (h_points->size() / 3)) * 3;
+        float p1_x = h_points->at(p1_id);
+        float p1_y = h_points->at(p1_id+1);
+        float p1_z = h_points->at(p1_id+2);
+
+        int p2_id = (rand() % (h_points->size() / 3)) * 3;
+        float p2_x = h_points->at(p2_id);
+        float p2_y = h_points->at(p2_id+1);
+        float p2_z = h_points->at(p2_id+2);
+
+        int p3_id = (rand() % (h_points->size() / 3)) * 3;
+        float p3_x = h_points->at(p3_id);
+        float p3_y = h_points->at(p3_id+1);
+        float p3_z = h_points->at(p3_id+2);
+
+
+
+
+        // Fit a plane, Ax+By+Cz+D=0
+        std::vector<float> d_points(5);
+        float A, B, C, D;
+        // A = (point2.y - point1.y) * (point3.z - point1.z) - (point2.z - point1.z) * (point3.y - point1.y); // (y2 - y1)(z3 - z1) - (z2 - z1)(y3 - y1)
+        // B = (point2.z - point1.z) * (point3.x - point1.x) - (point2.x - point1.x) * (point3.z - point1.z); // (z2 - z1)(x3 - x1) - (x2 - x1)(z3 - z1)
+        // C = (point2.x - point1.x) * (point3.y - point1.y) - (point2.y - point1.y) * (point3.x - point1.x); // (x2 - x1)(y3 - y1) - (y2 - y1)(x3 - x1)
+        // D = -1 * (A * point1.x + B * point1.y + C * point1.z); // -(A * x1 + B * y1 + C * z1)
+
+        A = (p2_y - p1_y) * (p3_z - p1_z) - (p2_z - p1_z) * (p3_y - p1_y); // (y2 - y1)(z3 - z1) - (z2 - z1)(y3 - y1)
+        B = (p2_z - p1_z) * (p3_x - p1_x) - (p2_x - p1_x) * (p3_z - p1_z); // (z2 - z1)(x3 - x1) - (x2 - x1)(z3 - z1)
+        C = (p2_x - p1_x) * (p3_y - p1_y) - (p2_y - p1_y) * (p3_x - p1_x); // (x2 - x1)(y3 - y1) - (y2 - y1)(x3 - x1)
+        D = -1 * (A * p1_x + B * p1_y + C * p1_z); // -(A * x1 + B * y1 + C * z1)
+
+        float sqrt_denom = sqrt(A * A + B * B + C * C);
+        d_points[0] = A;
+        d_points[1] = B;
+        d_points[2] = C;
+        d_points[3] = D;
+        d_points[4] = sqrt_denom;
+
+        //------------------------------------------------------
+        // // 6. Create memory buffers on the DEVICE
+        // //------------------------------------------------------
+        // // Create buffers for input and output
+        // cl_mem h_point_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY, image_width * image_height * image_channels * sizeof(cl_uchar), NULL, NULL);
+        // cl_mem d_point_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, image_width * image_height * image_channels * sizeof(cl_uchar), NULL, NULL);
+        // cl_mem index_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(gaussian_kernel), (void*)gaussian_kernel, NULL);
+
+
+
+        // Measure distance between every point and fitted plane
+        // this needs to be sent on GPU
+        std::vector<int> inlier;
+        pcl::PointIndices::Ptr inliersTemp{new pcl::PointIndices()};
+
+        for (auto it = cloud->points.begin(); it != cloud->points.end(); ++it)
+        {
+            float d = fabs(A * (*it).x + B * (*it).y + C * (*it).z + D) / sqrt_denom; // |A*x+B*y+C*z+D|/(A^2+B^2+C^2)
+            // If distance is smaller than threshold count it as inlier
+            if (d <= distanceThreshold)
+            {
+                inliersTemp->indices.push_back(it - cloud->begin());
+            }
+        }
+        for (int it = 0; it < h_points->size() ; it=it+3)
+        {
+            float d = fabs(A * h_points->at(it) + B * h_points->at(it+1) + C * h_points->at(it+2) + D) / sqrt_denom; // |A*x+B*y+C*z+D|/(A^2+B^2+C^2)
+            // If distance is smaller than threshold count it as inlier
+            if (d <= distanceThreshold)
+            {
+                inlier.push_back(1);
+            }
+            else
+            {
+                inlier.push_back(0);
+            }
+        }
+
+        for (int it = 0; it < inlier.size() ; it+3)
+        {
+            if (inlier[it] == 1)
+            {
+                // PointT inlier_point;
+                // inlier_point.x = h_points->at(it);
+                // inlier_point.y = h_points->at(it+1);
+                // inlier_point.z = h_points->at(it+2);
+
+                // inlierPoints->points.push_back(inlier_point);
+
+                inliersResult_check->indices.push_back(it);
+
+            }
+            
+        }
+        // inliersResult_check->indices = inlier;
+        // inliersResult_check = inlierPoints;
+
+
+        if (inliersTemp->indices.size() > inliersResult->indices.size())
+        {
+            inliersResult = inliersTemp;
+        }
+    }
+
+    if (inliersResult->indices.size() == 0)
+    {
+        std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
+    }
+    auto endTime = std::chrono::steady_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout << "plane segmentation took " << elapsedTime.count() << " milliseconds" << std::endl;
+
+    // std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(inliersResult, cloud);
+    std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(inliersResult_check, cloud);
+
+    delete h_points;
+
+    return segResult;
+}
 
 template<typename PointT>
 std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
