@@ -161,37 +161,37 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
         h_points->push_back(cloud->points[i].z);
     }
 
-    //------------------------------------------------------
-    // 3. Platform and device setup
-    //------------------------------------------------------
-    cl_platform_id platform;
-    clGetPlatformIDs(1, &platform, NULL);
-    cl_device_id device;
-    clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-    // Max Work GroupSize of the device
-    size_t max_work_group_size;
-    clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(max_work_group_size), &max_work_group_size, NULL);
-
-    //------------------------------------------------------
-    // 4. Create a context and command queue
-    //------------------------------------------------------
-    // Create context and command queue with profiling enabled
-    cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, NULL);
-    cl_command_queue queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, NULL);
-
-    //------------------------------------------------------
-    // 5. Build the program and create the kernel
-    //------------------------------------------------------
-    const char* kernel_filename = "../src/ransac_kernel.cl";
-    std::string kernel_source = loadKernel(kernel_filename);
-
-    //------------------------------------------------------
-    // // 6. Create memory buffers on the DEVICE
     // //------------------------------------------------------
-    // // Create buffers for input and output
-    cl_mem h_point_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY, 20000 * sizeof(float), NULL, NULL);
-    cl_mem d_point_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY, 5 * sizeof(float), NULL, NULL);
-    cl_mem inlier_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY , 20000 * sizeof(int), NULL, NULL);
+    // // 3. Platform and device setup
+    // //------------------------------------------------------
+    // cl_platform_id platform;
+    // clGetPlatformIDs(1, &platform, NULL);
+    // cl_device_id device;
+    // clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    // // Max Work GroupSize of the device
+    // size_t max_work_group_size;
+    // clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(max_work_group_size), &max_work_group_size, NULL);
+
+    // //------------------------------------------------------
+    // // 4. Create a context and command queue
+    // //------------------------------------------------------
+    // // Create context and command queue with profiling enabled
+    // cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, NULL);
+    // cl_command_queue queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, NULL);
+
+    // //------------------------------------------------------
+    // // 5. Build the program and create the kernel
+    // //------------------------------------------------------
+    // const char* kernel_filename = "../src/ransac_kernel.cl";
+    // std::string kernel_source = loadKernel(kernel_filename);
+
+    // //------------------------------------------------------
+    // // // 6. Create memory buffers on the DEVICE
+    // // //------------------------------------------------------
+    // // // Create buffers for input and output
+    // cl_mem h_point_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY, 20000 * sizeof(float), NULL, NULL);
+    // cl_mem d_point_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY, 5 * sizeof(float), NULL, NULL);
+    // cl_mem inlier_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY , 20000 * sizeof(int), NULL, NULL);
     
 
 
