@@ -306,6 +306,14 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     //------------------------------------------------------
     const char* kernel_filename = "../src/ransac_kernel.cl";
     std::string kernel_source = loadKernel(kernel_filename);
+
+    //------------------------------------------------------
+    // // 6. Create memory buffers on the DEVICE
+    // //------------------------------------------------------
+    // // Create buffers for input and output
+    cl_mem h_point_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY, 20000 * sizeof(float), NULL, NULL);
+    cl_mem d_point_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY, 5 * sizeof(float), NULL, NULL);
+    cl_mem inlier_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY , 20000 * sizeof(int), NULL, NULL);
     
 
 
@@ -353,14 +361,6 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
         d_points[2] = C;
         d_points[3] = D;
         d_points[4] = sqrt_denom;
-
-        //------------------------------------------------------
-        // // 6. Create memory buffers on the DEVICE
-        // //------------------------------------------------------
-        // // Create buffers for input and output
-        // cl_mem h_point_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY, image_width * image_height * image_channels * sizeof(cl_uchar), NULL, NULL);
-        // cl_mem d_point_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, image_width * image_height * image_channels * sizeof(cl_uchar), NULL, NULL);
-        // cl_mem index_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(gaussian_kernel), (void*)gaussian_kernel, NULL);
 
 
 
