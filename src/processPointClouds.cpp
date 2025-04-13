@@ -678,6 +678,9 @@ ProcessPointClouds<PointT>::SegmentPlaneGPU(typename pcl::PointCloud<PointT>::Pt
 }
 
 
+
+
+
 template<typename PointT>
 std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
 {
