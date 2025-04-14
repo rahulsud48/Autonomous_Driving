@@ -557,6 +557,11 @@ ProcessPointClouds<PointT>::SegmentPlaneGPU(typename pcl::PointCloud<PointT>::Pt
     cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, NULL);
     cl_command_queue queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, NULL);
 
+    // profiler
+    cl_event write_event, kernel_event, read_event;
+
+
+
     // Load and build kernel program
     const char* kernel_filename = "../src/ransac_kernel.cl";
     std::string kernel_source = loadKernel(kernel_filename);
@@ -582,7 +587,7 @@ ProcessPointClouds<PointT>::SegmentPlaneGPU(typename pcl::PointCloud<PointT>::Pt
     cl_mem d_inliers_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, inliersBufferSize, NULL, NULL);
 
     // Write the flattened point cloud to the device (it does not change in the loop).
-    clEnqueueWriteBuffer(queue, d_points_buffer, CL_TRUE, 0, pointsBufferSize, h_points->data(), 0, NULL, NULL);
+    clEnqueueWriteBuffer(queue, d_points_buffer, CL_TRUE, 0, pointsBufferSize, h_points->data(), 0, NULL, &write_event);
 
     // Variables to track the best inlier count.
     size_t bestInlierCount = 0;
@@ -629,12 +634,12 @@ ProcessPointClouds<PointT>::SegmentPlaneGPU(typename pcl::PointCloud<PointT>::Pt
 
         // Launch kernel with one work-item per point.
         size_t global_size = numPoints;
-        clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
+        clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, &kernel_event);
         clFinish(queue);
 
         // Read back inliers.
         std::vector<int> inlierFlags(numPoints, 0);
-        clEnqueueReadBuffer(queue, d_inliers_buffer, CL_TRUE, 0, inliersBufferSize, inlierFlags.data(), 0, NULL, NULL);
+        clEnqueueReadBuffer(queue, d_inliers_buffer, CL_TRUE, 0, inliersBufferSize, inlierFlags.data(), 0, NULL, &read_event);
 
         // Count and store indices for the current iteration.
         size_t inlierCount = 0;
@@ -655,6 +660,19 @@ ProcessPointClouds<PointT>::SegmentPlaneGPU(typename pcl::PointCloud<PointT>::Pt
             bestInliers = currentInliers;
             bestInliers_check = currentInliers;
         }
+
+        auto print_event_duration = [](cl_event e, const std::string& label) {
+            cl_ulong start, end;
+            clGetEventProfilingInfo(e, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL);
+            clGetEventProfilingInfo(e, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL);
+            double time_ms = (end - start) * 1e-6; // ns to ms
+            std::cout << label << ": " << time_ms << " ms\n";
+        };
+        // print_event_duration(write_event, "WriteBuffer Time");
+        // print_event_duration(kernel_event, "Kernel Execution Time");
+        // print_event_duration(read_event, "ReadBuffer Time");
+
+
     }
 
     auto endTime = std::chrono::steady_clock::now();

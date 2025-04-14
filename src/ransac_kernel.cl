@@ -25,6 +25,6 @@ __kernel void ransac_plane_segmentation(__global const float* points,
 
     // Calculate the distance from point to the plane.
     float dist = fabs(A * x + B * y + C * z + D) / normFactor;
-    inliers[idx] = (int)(dist <= distanceThreshold);
+    inliers[idx] = (dist <= distanceThreshold);
 
 }

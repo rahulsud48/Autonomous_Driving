@@ -59,7 +59,7 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
     constexpr float X{ 30.0 }, Y{ 6.5 }, Z{ 2.5 };
     // pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.1f, Eigen::Vector4f(-(X / 2), -Y, -Z, 1), Eigen::Vector4f(X, Y, Z, 1));
     // renderPointCloud(viewer,filterCloud,"filterCloud");
-    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlaneGPU(inputCloud, 25, 0.3);
+    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlanePCL(inputCloud, 25, 0.3);
     // renderPointCloud(viewer,segmentCloud.first,"obstCloud",Color(1,0,0));
     renderPointCloud(viewer,segmentCloud.second,"planeCloud",Color(0,1,0));
 
@@ -257,8 +257,8 @@ int main (int argc, char** argv)
 
     // renders the scenes of the viewer
     ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
-    // std::vector<boost::filesystem::path> stream = pointProcessorI->streamPcd("../src/sensors/data/pcd/data_4");
-    std::vector<boost::filesystem::path> stream = pointProcessorI->streamPcd("/media/rahul/a079ceb2-fd12-43c5-b844-a832f31d5a39/kitti-360/download_2d_perspective/KITTI-360/data_3d_raw/2013_05_28_drive_0000_sync/velodyne_points/data");
+    // std::vector<boost::filesystem::path> stream = pointProcessorI->streamPcd("../src/sensors/data/pcd/data_1");
+    std::vector<boost::filesystem::path> stream = pointProcessorI->streamPcd("/media/rahul/a079ceb2-fd12-43c5-b844-a832f31d5a39/kitti-360/download_2d_perspective/KITTI-360/data_3d_raw/2013_05_28_drive_0003_sync/velodyne_points/data");
     auto streamIterator = stream.begin();
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloudI;
     // cityBlock(viewer);
