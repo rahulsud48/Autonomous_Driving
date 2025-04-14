@@ -3,7 +3,7 @@ __kernel void ransac_plane_segmentation(__global const float* points,
                                         __global const float* planeParams,
                                         const int numPoints,
                                         const float distanceThreshold,
-                                        __global int* inliers)
+                                        __global int* restrict inliers)
 {
     // Get the global index for the point.
     int idx = get_global_id(0);
@@ -25,5 +25,6 @@ __kernel void ransac_plane_segmentation(__global const float* points,
 
     // Calculate the distance from point to the plane.
     float dist = fabs(A * x + B * y + C * z + D) / normFactor;
-    inliers[idx] = (dist <= distanceThreshold) ? 1 : 0;
+    inliers[idx] = (int)(dist <= distanceThreshold);
+
 }
